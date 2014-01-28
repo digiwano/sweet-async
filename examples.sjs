@@ -1,6 +1,6 @@
 (function(){
 
-  function testy(filename, callback) {
+  function example(filename, callback) {
     // assumes existence of process.nextTick(), so in browser only works if something
     // else (such as browserify) has created a process.nextTick(). use $async:pause for
     // places w/o process.nextTick

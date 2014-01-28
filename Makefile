@@ -1,5 +1,6 @@
-
 BIN=./node_modules/.bin
+
+default: pretty
 
 example:
 	@ ${BIN}/sjs -m ./macros examples.sjs -r

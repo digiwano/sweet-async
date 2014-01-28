@@ -68,7 +68,9 @@ macro $async_var {
 
   // with error callback
   case {
-    $op ( $args_lhs ... --> $args_rhs ... ) = $cmd ... ( $cmdargs_lhs ...  --> $callback $cmdargs_rhs ... ) ; $rest ...
+    $op ( $args_lhs ... --> $args_rhs ... ) =
+    $cmd ... ( $cmdargs_lhs ...  --> $callback $cmdargs_rhs ... ) ;
+    $rest ...
   } => {
     letstx $error = [makeIdent('error', #{$op})];
     return #{
@@ -88,7 +90,8 @@ macro $async_var {
 
   // for no error callback
   case {
-    $op ( $args (,) ... ) = $cmd ... ($cmdargs_lhs ... --> $cmdargs_rhs ... ) ; $rest ...
+    $op ( $args (,) ... ) = $cmd ...
+    ($cmdargs_lhs ... --> $cmdargs_rhs ... ) ; $rest ...
   } => {
     letstx $error = [makeIdent('error', #{$op})];
     return #{
