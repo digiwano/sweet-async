@@ -24,10 +24,8 @@ macro $arrows {
 // might not be usable
 macro $async_block {
   rule { $block $rest ... } => {
+    var _rest = function() { $rest ... }.bind(this);
     $arrows(_rest $block)
-    function _rest() {
-      $rest ...
-    }.bind(this)
   }
 }
 
@@ -35,7 +33,8 @@ macro $async_wait {
   rule {
     { $body ... } $rest ...
   } => {
-    $arrows( (function(){$rest ...}.bind(this)) $body ...)
+    var _rest = function(){ $rest ... }.bind(this)
+    $arrows(_rest $body ...)
   }
 }
 
@@ -68,41 +67,34 @@ macro $async_var {
 
   // with error callback
   case {
-    $op ( $args_lhs ... --> $args_rhs ... ) =
-    $cmd ... ( $cmdargs_lhs ...  --> $callback $cmdargs_rhs ... ) ;
+    $op ( $argl ... --> $argr ... ) =
+    $cmd ... ( $cmdl ...  --> $callback $cmdr ... ) ;
     $rest ...
   } => {
     letstx $error = [makeIdent('error', #{$op})];
     return #{
-      $cmd ...
-      (
-        $cmdargs_lhs ...
-        (function( $args_lhs ... $error $args_rhs ... ) {
-          if ( $error ) {
-            return $callback ( $error );
-          }
-          $rest ...
-        }.bind(this))
-        $cmdargs_rhs ...
-      ) ;
+      var _rest = function( $argl ... $error $argr ... ) {
+        if ( $error ) {
+          return $callback ( $error );
+        }
+        $rest ...
+      }.bind(this);
+
+      $cmd ... ( $cmdl ... _rest $cmdr ... ) ;
     };
   }
 
   // for no error callback
   case {
     $op ( $args (,) ... ) = $cmd ...
-    ($cmdargs_lhs ... --> $cmdargs_rhs ... ) ; $rest ...
+    ($cmdl ... --> $cmdr ... ) ; $rest ...
   } => {
     letstx $error = [makeIdent('error', #{$op})];
     return #{
-      $cmd ...
-      (
-        $cmdargs_lhs ...
-        (function( $args (,) ... ) {
+      var _rest = function( $args (,) ... ) {
           $rest ...
-        }.bind(this))
-        $cmdargs_rhs ...
-      )
+        }.bind(this);
+      $cmd ... ( $cmdl ... _rest $cmdr ... )
     };
   }
 }
