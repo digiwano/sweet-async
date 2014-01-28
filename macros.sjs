@@ -27,7 +27,7 @@ macro $async_block {
     $arrows(_rest $block)
     function _rest() {
       $rest ...
-    }
+    }.bind(this)
   }
 }
 
@@ -35,7 +35,7 @@ macro $async_wait {
   rule {
     { $body ... } $rest ...
   } => {
-    $arrows( (function(){$rest ...}) $body ...)
+    $arrows( (function(){$rest ...}.bind(this)) $body ...)
   }
 }
 
@@ -51,7 +51,7 @@ macro $async_tick {
 macro $async_pause {
   rule { ; $rest ... } => { $async_pause $rest ... }
   rule { $rest ... } => {
-    var _rest = function() { $rest ... };
+    var _rest = function() { $rest ... }.bind(this);
 
     (typeof process == 'object' && process.nextTick) ?
       process.nextTick(_rest) :
@@ -82,7 +82,7 @@ macro $async_var {
             return $callback ( $error );
           }
           $rest ...
-        })
+        }.bind(this))
         $cmdargs_rhs ...
       ) ;
     };
@@ -100,7 +100,7 @@ macro $async_var {
         $cmdargs_lhs ...
         (function( $args (,) ... ) {
           $rest ...
-        })
+        }.bind(this))
         $cmdargs_rhs ...
       )
     };

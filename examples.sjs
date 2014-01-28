@@ -57,4 +57,5 @@
     callback(null);
   }
 
+  module.exports = example;
 }).call();
