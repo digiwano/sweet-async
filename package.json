@@ -12,5 +12,9 @@
     "async"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "sweet.js": "~0.4.1",
+    "uglify-js": "~2.4.12"
+  }
 }
