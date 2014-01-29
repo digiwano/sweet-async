@@ -45,8 +45,6 @@
     // if you use the -->callback form, we'll do error propogation for you:
     $async:var data2 = fs.readFile( filename, -->callback );
 
-
-
     callback(null, data);
   }
 
