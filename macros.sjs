@@ -68,18 +68,22 @@ macro $async_pause {
 }
 
 macro $async_sleep {
-  rule { ( $x sec ) $rest ... } => {
-    $async_sleep( ($x * 1000) ) $rest ...
+  rule { ($x...) ; $rest ... } => {
+    $async_sleep($x...) $rest ...
   }
-  rule { ( $x s ) $rest ... } => {
-    $async_sleep( $x sec ) $rest ...
+  rule { ($x sec) $rest ... } => {
+    $async_sleep(($x * 1000)) $rest ...
   }
-  rule { ( $x ms ) $rest ... } => {
-    $async_sleep( $x ) $rest ...
+  rule { ($x s) $rest ... } => {
+    $async_sleep($x sec) $rest ...
   }
-  rule { ( $x ) $rest ... } => {
+  rule { ($x ms) $rest ... } => {
+    $async_sleep($x) $rest ...
+  }
+  rule { ($x) $rest ... } => {
     setTimeout($fn{ $rest ... }, $x);
   }
+  rule { () } => { $async_pause }
 }
 
 
