@@ -1,0 +1,20 @@
+{
+  "name": "sweet-async",
+  "version": "0.1.0",
+  "description": "async macros for sweetjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "macros",
+    "sweet-macros",
+    "async"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "sweet.js": "~0.4.1",
+    "uglify-js": "~2.4.12"
+  }
+}
