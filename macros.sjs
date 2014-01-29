@@ -1,3 +1,15 @@
+// self-bound function
+macro $fn {
+  rule { {$body ...} } => {
+    $fn () {$body ...}
+  }
+  rule { $args { $body... } } => {
+    (function $args { $body...}).bind(this)
+  }
+}
+
+
+// finds --> recursively within a block and replaces it with a call to the given callback
 macro $arrows {
   // recurse into () / {} / [] while leaving the delims themselves intact
   rule { ($n ($a...)) } => {( $arrows($n $a...) )}
@@ -24,86 +36,88 @@ macro $arrows {
 // might not be usable
 macro $async_block {
   rule { $block $rest ... } => {
-    var _rest = function() { $rest ... }.bind(this);
+    var _rest = $fn{ $rest ... };
     $arrows(_rest $block)
   }
 }
+
 
 macro $async_wait {
   rule {
     { $body ... } $rest ...
   } => {
-    var _rest = function(){ $rest ... }.bind(this)
+    var _rest = $fn{ $rest ... }
     $arrows(_rest $body ...)
   }
 }
 
 macro $async_tick {
+  // swallow (optional) trailing ; on $async:tick;
   rule { ; $rest ... } => { $async_tick $rest ... }
   rule { $rest ... } => {
-    process.nextTick(function() {
-      $rest ...
-    }.bind(this))
+    process.nextTick($fn{ $rest ... });
   }
 }
 
 macro $async_pause {
   rule { ; $rest ... } => { $async_pause $rest ... }
   rule { $rest ... } => {
-    var _rest = function() { $rest ... }.bind(this);
+    ((typeof process == 'object' && process.nextTick) ?
+      process.nextTick : setTimeout)($fn{ $rest... }, 0)
+  }
+}
 
-    (typeof process == 'object' && process.nextTick) ?
-      process.nextTick(_rest) :
-        setTimeout(_rest, 0)
+macro $async_sleep {
+  rule { ( $x sec ) $rest ... } => {
+    $async_sleep( ($x * 1000) ) $rest ...
+  }
+  rule { ( $x s ) $rest ... } => {
+    $async_sleep( $x sec ) $rest ...
+  }
+  rule { ( $x ms ) $rest ... } => {
+    $async_sleep( $x ) $rest ...
+  }
+  rule { ( $x ) $rest ... } => {
+    setTimeout($fn{ $rest ... }, $x);
   }
 }
 
 
 // i want to try to refactor this to use $arrows
 macro $async_var {
-  case { $op $name:ident = $cmd:expr $rest ... } => {
-    return #{ $op ( --> , $name) = $cmd $rest ... };
+  rule { $name:ident = $cmd:expr $rest ... } => {
+    $async_var ( --> , $name) = $cmd $rest ...
   }
 
   // with error callback
-  case {
-    $op ( $argl ... --> $argr ... ) =
+  rule {
+    ( $argl ... --> $argr ... ) =
     $cmd ... ( $cmdl ...  --> $callback $cmdr ... ) ;
     $rest ...
   } => {
-    letstx $error = [makeIdent('error', #{$op})];
-    return #{
-      var _rest = function( $argl ... $error $argr ... ) {
-        if ( $error ) {
-          return $callback ( $error );
-        }
+    $cmd ... ( $cmdl ...
+      ($fn ( $argl ... error $argr ... ) {
+        if ( error ) { return $callback ( error ); }
         $rest ...
-      }.bind(this);
-
-      $cmd ... ( $cmdl ... _rest $cmdr ... ) ;
-    };
+      })
+    $cmdr ... ) ;
   }
 
   // for no error callback
-  case {
-    $op ( $args (,) ... ) = $cmd ...
+  rule {
+    ( $args (,) ... ) = $cmd ...
     ($cmdl ... --> $cmdr ... ) ; $rest ...
   } => {
-    letstx $error = [makeIdent('error', #{$op})];
-    return #{
-      var _rest = function( $args (,) ... ) {
-          $rest ...
-        }.bind(this);
-      $cmd ... ( $cmdl ... _rest $cmdr ... )
-    };
+    $cmd ... ( $cmdl ... ($fn ( $args (,) ... ) { $rest ... }) $cmdr ... )
   }
 }
 
 macro $async {
-  rule { : var   $rest ... } => { $async_var   $rest ... }
-  rule { : wait  $rest ... } => { $async_wait  $rest ... }
-  rule { : pause $rest ... } => { $async_pause $rest ... }
-  rule { : tick  $rest ... } => { $async_tick  $rest ... }
+  rule { : var   } => { $async_var   }
+  rule { : wait  } => { $async_wait  }
+  rule { : pause } => { $async_pause }
+  rule { : tick  } => { $async_tick  }
+  rule { : sleep } => { $async_sleep }
   rule { : block } => { $async_block }
 }
 
