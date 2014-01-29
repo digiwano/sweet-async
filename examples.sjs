@@ -15,6 +15,9 @@
   }
 
   function example_sleep() {
+    // with no argument, async:sleep() is an alias for $async:pause
+    console.log("nextTick/setTimeout 0!");
+    $async:sleep();
     console.log("will sleep 125 ms");
     $async:sleep(125);
     console.log("will sleep 250 ms");
@@ -27,7 +30,23 @@
   }
 
   function example_var(filename, callback) {
-    $async:var data = fs.readFile( filename, -->callback );
+    // without an error in the callback
+    $async:var (exists) = fs.exists( filename, --> );
+
+    if (! exists) {
+      return callback(new Error("File doesn't exist!"));
+    }
+
+    // the above is shorthand for this : (dropping the parens implicitly
+    // adds the error callback for you)
+    $async:var (error, data) = fs.readFile( filename, --> );
+    if (error) { return callback(error); }
+
+    // if you use the -->callback form, we'll do error propogation for you:
+    $async:var data2 = fs.readFile( filename, -->callback );
+
+
+
     callback(null, data);
   }
 
